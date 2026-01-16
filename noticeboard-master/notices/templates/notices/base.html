@@ -1,0 +1,133 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Notice Board{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    {% block stylesheet %}
+    <link rel="stylesheet" href="{% static 'css/notices.css' %}">
+    {% endblock %}
+    
+    <style>
+        /* Styling for the live search dropdown */
+        #search-results {
+            position: absolute;
+            top: 38px;
+            left: 0;
+            background: white;
+            width: 100%;
+            z-index: 1050;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .search-wrapper { position: relative; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'notices:home' %}">Notice Board</a>
+
+            <div class="search-wrapper mx-3">
+                <form class="form-inline" action="{% url 'notices:home' %}" method="GET">
+                    <input id="search-input" name="q" class="form-control mr-sm-2 form-control-sm" type="text" 
+                           autocomplete="off" placeholder="Search notices..." value="{{ request.GET.q }}">
+                    <button class="btn btn-outline-success btn-sm" type="submit">Search</button>
+                    <div id="search-results"></div>
+                </form>
+            </div>
+
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#mainMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainMenu">
+                {% block navbar %}
+                <ul class="navbar-nav ml-auto">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userMenu" data-toggle="dropdown">
+                                {{ user.username }}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a>
+                                <a class="dropdown-item" href="{% url 'accounts:my_account' %}">My Account</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'accounts:logout' %}">Log out</a>
+                            </div>
+                        </li>
+                        {% if user.is_staff %}
+                            <li class="nav-item"><a href="{% url 'notices:new_notice' %}" class="btn btn-primary btn-sm mx-1">New notice</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a href="{% url 'notices:tags' %}" class="btn btn-primary btn-sm mx-1">View tags</a></li>
+                    {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link btn btn-outline-secondary btn-sm" href="#" data-toggle="dropdown">Student</a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{% url 'accounts:login' %}">Login</a>
+                                <a class="dropdown-item" href="{% url 'accounts:signup' %}">Signup</a>
+                            </div>
+                        </li>
+                        <li class="nav-item dropdown ml-2">
+                            <a class="nav-link btn btn-outline-secondary btn-sm" href="#" data-toggle="dropdown">Teacher</a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="{% url 'accounts:login' %}">Login</a>
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+                {% endblock %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+    <script>
+        const searchInput = document.getElementById('search-input');
+        const resultsDiv = document.getElementById('search-results');
+
+        searchInput.addEventListener('keyup', function() {
+            const query = searchInput.value;
+
+            if (query.length > 0) {
+                fetch(`/notices/live-search/?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        resultsDiv.innerHTML = '';
+                        if (data.results.length > 0) {
+                            resultsDiv.style.display = 'block';
+                            data.results.forEach(item => {
+                                // Create links that go directly to the notice detail
+                                resultsDiv.innerHTML += `<a href="/notices/notice/${item.id}/" class="dropdown-item">${item.title}</a>`;
+                            });
+                        } else {
+                            resultsDiv.style.display = 'none';
+                        }
+                    });
+            } else {
+                resultsDiv.style.display = 'none';
+            }
+        });
+
+        // Close results if user clicks outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target)) resultsDiv.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
