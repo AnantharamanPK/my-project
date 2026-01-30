@@ -1,0 +1,128 @@
+{% extends 'notices/base.html' %}
+{% load static %}
+
+{% block title %}Welcome - NoticeBoard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5 animate-fade-in">
+        <h1 class="display-3 font-weight-800 text-white mb-2 main-title">
+            Welcome to <span class="gradient-text">NoticeBoard</span>
+        </h1>
+        <p class="lead text-white-50 font-weight-500">
+            Select your gateway to stay connected with the campus community.
+        </p>
+    </div>
+
+    <div class="row w-100 justify-content-center mx-0">
+        <div class="col-md-5 mb-4">
+            <div class="portal-card p-5 text-center h-100">
+                <div class="portal-icon mb-4">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3534/3534033.png" alt="Student" width="100">
+                </div>
+                <h2 class="portal-heading">Student Portal</h2>
+                <p class="portal-subtext">Browse all active announcements and exam schedules instantly.</p>
+                <a href="{% url 'accounts:student_login' %}" class="btn btn-primary btn-portal">ENTER PORTAL</a>
+            </div>
+        </div>
+
+        <div class="col-md-5 mb-4">
+            <div class="portal-card p-5 text-center h-100">
+                <div class="portal-icon mb-4">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2681/2681826.png" alt="Staff" width="100">
+                </div>
+                <h2 class="portal-heading">Staff Login</h2>
+                <p class="portal-subtext">Authorized access for faculty to post and manage notices.</p>
+                <a href="{% url 'accounts:staff_login' %}" class="btn btn-dark btn-portal">ADMIN LOGIN</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* --- Main Heading Styles --- */
+    .main-title {
+        letter-spacing: -2px;
+        text-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .gradient-text {
+        background: linear-gradient(to right, #ffc107, #fff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+    }
+
+    .font-weight-800 { font-weight: 800; }
+    .font-weight-500 { font-weight: 500; }
+    .text-white-50 { color: rgba(255, 255, 255, 0.8) !important; }
+
+    /* --- Card & Icon Styles --- */
+    .portal-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(15px);
+        border-radius: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .portal-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 40px 80px rgba(0,0,0,0.25);
+        background: #fff;
+    }
+
+    .portal-heading {
+        font-weight: 800;
+        color: #111827;
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+
+    .portal-subtext {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    /* --- Button Styles --- */
+    .btn-portal {
+        width: 100%;
+        padding: 16px;
+        border-radius: 18px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: #007bff !important;
+        box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4);
+    }
+
+    .btn-dark {
+        background: #111827 !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-portal:hover {
+        transform: scale(1.02);
+        filter: brightness(1.1);
+    }
+
+    /* --- Animations --- */
+    .animate-fade-in {
+        animation: fadeInDown 1s ease-out;
+    }
+
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
