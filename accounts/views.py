@@ -21,28 +21,26 @@ def login_choice(request):
         return redirect('notices:home')
     return render(request, 'accounts/login_choice.html')
 
-# UPDATED: Separate Login View for Students (Blocks Staff & Admins)
+# UPDATED: Separate Login View for Students (Blocks Staff)
 def student_login(request):
     if request.user.is_authenticated:
         return redirect('notices:home')
-    
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
             
-            # BLOCK STAFF & ADMINS FROM STUDENT PORTAL
-            if user.is_staff or user.is_superuser:
-                form.add_error(None, "Staff and Admins must use their specific Login portals.")
-            else:
+            # BLOCK STAFF FROM STUDENT PORTAL
+            if not user.is_staff:
                 login(request, user)
                 return redirect('notices:home')
+            else:
+                form.add_error(None, "Staff members must use the Admin Login portal.")
     else:
         form = AuthenticationForm()
-        
     return render(request, 'accounts/login.html', {'form': form, 'user_type': 'Student'})
 
-# UPDATED: Separate Login View for Staff (Blocks Students & Admins)
+# UPDATED: Separate Login View for Staff (Blocks Students)
 def staff_login(request):
     if request.user.is_authenticated:
         return redirect('notices:home')
@@ -52,17 +50,12 @@ def staff_login(request):
         if form.is_valid():
             user = form.get_user()
             
-            # 1. BLOCK ADMINS (Superusers)
-            if user.is_superuser:
-                form.add_error(None, "Administrators are not allowed here. Please use the Admin Login.")
-            
-            # 2. CHECK IF USER IS STAFF (and NOT a student)
-            elif user.is_staff:
+            # CHECK IF THE USER HAS STAFF PERMISSIONS
+            if user.is_staff:
                 login(request, user)
                 return redirect('notices:home')
-            
-            # 3. BLOCK STUDENTS
             else:
+                # Add a custom error if a student tries to use this portal
                 form.add_error(None, "Access Denied: This portal is for authorized Staff only.")
     else:
         form = AuthenticationForm()
@@ -107,3 +100,4 @@ def live_search(request):
     else:
         data = []
     return JsonResponse({'results': data})
+

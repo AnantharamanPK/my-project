@@ -10,18 +10,6 @@ from django.contrib import messages
 from .models import Notice, User, NoticeReadStatus, DirectMessage # Added DirectMessage
 from .forms import NewNoticeForm
 from django.db import transaction
-# In notices/views.py
-
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-from .models import Notification
-
-
-def clear_notifications(request):
-    # Delete all notifications for the current user
-    Notification.objects.filter(recipient=request.user).delete()
-    # Reload the page the user was currently on
-    return redirect(request.META.get('HTTP_REFERER', 'notices:home'))
 
 # 1. MAIN LIST VIEW (The Board)
 class NoticeListView(LoginRequiredMixin, ListView): 

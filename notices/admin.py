@@ -1,11 +1,9 @@
+# notices/admin.py
 from django.contrib import admin
 from django.utils import timezone
 from django.contrib.auth import get_user_model 
-from .models import Notice, NoticeReadStatus, DirectMessage, Notification
+from .models import Notice, NoticeReadStatus, DirectMessage
 
-# ==========================================
-# 1. Custom Filters & Inlines (Preserved)
-# ==========================================
 class PendingApprovalFilter(admin.SimpleListFilter):
     title = 'Approval Status'
     parameter_name = 'is_approved'
@@ -30,37 +28,16 @@ class NoticeReadInline(admin.TabularInline):
     verbose_name = "Read Receipt"
     verbose_name_plural = "Student Read Receipts"
 
-
-# ==========================================
-# 2. Notice Admin (Updated with Approval)
-# ==========================================
 @admin.register(Notice)
 class NoticeAdmin(admin.ModelAdmin):
-    # Added 'notifications_sent' to list_display
-    list_display = ('title', 'created_by', 'status', 'is_approved', 'notifications_sent', 'get_read_count', 'deadline_status', 'created_at') 
-    
-    list_filter = (PendingApprovalFilter, 'status', 'is_approved', 'notifications_sent', 'expires_at', 'created_at')
+    list_display = ('title', 'created_by', 'status', 'is_approved', 'get_read_count', 'deadline_status', 'created_at') 
+    list_filter = (PendingApprovalFilter, 'status', 'is_approved', 'expires_at', 'created_at')
     search_fields = ('title', 'message')
     
-    # Added 'notifications_sent' to readonly_fields so you can see it but not break it
-    fields = ('title', 'message', 'attachment', 'created_by', 'tags', 'status', 'is_approved', 'notifications_sent', 'rejection_reason', 'expires_at', 'who_has_read', 'who_has_not_read')
-    readonly_fields = ('notifications_sent', 'who_has_read', 'who_has_not_read')
+    fields = ('title', 'message', 'created_by', 'tags', 'status', 'is_approved', 'rejection_reason', 'expires_at', 'who_has_read', 'who_has_not_read')
+    readonly_fields = ('who_has_read', 'who_has_not_read')
 
     inlines = [NoticeReadInline]
-    
-    # --- NEW ACTION: Approve Button ---
-    actions = ['approve_notices']
-
-    def approve_notices(self, request, queryset):
-        # 1. Update status in database
-        queryset.update(is_approved=True, status='approved')
-        
-        # 2. Trigger save() individually to fire the Notification Signal
-        for notice in queryset:
-            notice.save()
-            
-    approve_notices.short_description = "✅ Approve selected notices (Send Notifications)"
-    # ----------------------------------
 
     def get_read_count(self, obj):
         return obj.read_statuses.count()
@@ -75,7 +52,6 @@ class NoticeAdmin(admin.ModelAdmin):
 
     def who_has_not_read(self, obj):
         User = get_user_model()
-        # Filter for strictly students (staff=False)
         all_students = User.objects.filter(is_staff=False)
         read_ids = obj.read_statuses.values_list('user_id', flat=True)
         unread_students = all_students.exclude(id__in=read_ids)
@@ -98,36 +74,28 @@ class NoticeAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.prefetch_related('read_statuses')
 
+# --- DirectMessage Registration Fixed ---
 
-# ==========================================
-# 3. Notification Admin (New)
-# ==========================================
-@admin.register(Notification)
-class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('recipient', 'message', 'is_read', 'created_at')
-    list_filter = ('is_read', 'created_at')
-    search_fields = ('recipient__username', 'message')
+# notices/admin.py
 
-
-# ==========================================
-# 4. Direct Message Admin (Preserved)
-# ==========================================
 @admin.register(DirectMessage)
 class DirectMessageAdmin(admin.ModelAdmin):
     list_display = ('student', 'admin', 'created_at', 'is_read')
     list_filter = ('is_read', 'created_at')
     search_fields = ('student__username', 'message')
     
+    # 1. Hide the 'Admin' field from the form since it should always be you
     exclude = ('admin',)
 
     def render_change_form(self, request, context, *args, **kwargs):
-        # Filter 'Student' dropdown to show ONLY students
-        if 'adminform' in context:
-             context['adminform'].form.fields['student'].queryset = get_user_model().objects.filter(is_staff=False)
+        # 2. Filter 'Student' dropdown to show ONLY students (not you/AnantharamanPK)
+        context['adminform'].form.fields['student'].queryset = get_user_model().objects.filter(is_staff=False)
         return super().render_change_form(request, context, *args, **kwargs)
 
     def save_model(self, request, obj, form, change):
-        # Automatically set the Admin to the logged-in user
+        # 3. Automatically set the Admin to AnantharamanPK (the logged-in user)
         if not obj.pk: 
             obj.admin = request.user
         super().save_model(request, obj, form, change)
+        
+        
